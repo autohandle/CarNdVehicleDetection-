@@ -19,9 +19,13 @@ if LINEAR:
     SCALES=[1.5] # Linear
     #SCALES=np.linspace(.75, 2., 6)
     #SCALES=np.linspace(1., 2., 5)
-    SCALES=np.linspace(1.2, 1.8, 4)
+    SCALES=np.linspace(1.2, 2., 5)
+    SCALES=np.append(SCALES, [2.5, 3., 3.5, 4.])
+    print("SCALES:", SCALES)
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
-
+    # len(SCALES)*.125, only detect left hand car
+    # .1 detects both cars, but a lot of other stuff to the left (probably in multiple images)
+    PERCENTOFBOUNDINGBOXESTOTOSS= .2
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
@@ -97,14 +101,20 @@ def convertFigureToImage(figure):
 
     return data
 
-BOUNDINGBOXOVERLAP=.5
+# .5: pretty much only sees left car
+# .3: is good
+BOUNDINGBOXOVERLAP=.3
+
+def isBoundingBoxOverlapping(theBondingBox1, theBoundingBox2, intersectionOverUnion=BOUNDINGBOXOVERLAP):
+    return FindCars.isEitherCompletelyContainedBy(theBondingBox1, theBoundingBox2) \
+        or FindCars.computeIntersectionOverUnion(theBondingBox1, theBoundingBox2)
 
 def findBoundingBoxesInList(theBoundingBoxesList, theBoundingBox):
     overlappingBoundingBoxes=[]
     for boundingBox in theBoundingBoxesList:
         if TESTING : print("findBoundingBoxesInList-theBoundingBox:", theBoundingBox, ", boundingBox:", boundingBox)
         if TESTING : print("findBoundingBoxesInList-computeIntersectionOverUnion?", FindCars.computeIntersectionOverUnion(theBoundingBox, boundingBox))
-        if FindCars.computeIntersectionOverUnion(boundingBox, theBoundingBox) > BOUNDINGBOXOVERLAP: #
+        if isBoundingBoxOverlapping(boundingBox, theBoundingBox) > BOUNDINGBOXOVERLAP: #
             overlappingBoundingBoxes.append(boundingBox)
     if TESTING and (len(overlappingBoundingBoxes) > 0) : print("findBoundingBoxesInList-overlappingBoundingBoxes:", overlappingBoundingBoxes)
     return overlappingBoundingBoxes
@@ -133,19 +143,18 @@ def findOverlappingBoundingBoxes(theFramesBoundingBoxArray, theBoundingBoxList):
 def mergeOverlappingBoundingBoxes(theBoundingBoxList, theBoundingBox):
     #print("mergeOverlappingBoundingBoxes-theBoundingBoxList:", theBoundingBoxList,
     #    ", theBoundingBox:", theBoundingBox)
-    mergedBoundingBoxes=[] # nont one to one with theOverlappingBoundingBoxList, len(0) entries are ignored
+    mergedBoundingBox=theBoundingBox
     if (len(theBoundingBoxList) != 0):
-        mergedBoundingBox=theBoundingBox
         for boundingBox in theBoundingBoxList:
             #print("mergeOverlappingBoundingBoxes-boundingBox:", boundingBox, ", mergedBoundingBox:", mergedBoundingBox)
             mergedBoundingBox=FindCars.union(mergedBoundingBox, boundingBox)
-            mergedBoundingBoxes.append(mergedBoundingBox)
-    if TESTING : print("mergeOverlappingBoundingBoxes-mergedBoundingBoxes:", mergedBoundingBoxes, \
+    if TESTING : print("mergeOverlappingBoundingBoxes-mergedBoundingBox:", mergedBoundingBox, \
         ", theBoundingBox:", theBoundingBox, ", theBoundingBoxList:", theBoundingBoxList)
-    return mergedBoundingBoxes;
+    return mergedBoundingBox;
 
-BOUNDINDBOXCOLLECTIONSIZE=20
-OVERLAPTHRESHOLD=5
+BOUNDINDBOXCOLLECTIONSIZE=5
+
+OVERLAPTHRESHOLD=3
 
 def mergeBoundingBoxesAcrossFrames(theFramesBoundingBoxArray, theBoundingBoxList): # boundingBoxCollection from labels
     global frameNumber
@@ -153,11 +162,11 @@ def mergeBoundingBoxesAcrossFrames(theFramesBoundingBoxArray, theBoundingBoxList
     overlappingBoundingBoxLists=findOverlappingBoundingBoxes(theFramesBoundingBoxArray, theBoundingBoxList) # list of a: list of all boundingBoxes for boxes that overlap
     #print("mergeBoundingBoxesAcrossFrames-len(overlappingBoundingBoxLists):", len(overlappingBoundingBoxLists), ", len(theBoundingBoxList):", len(theBoundingBoxList))
     for overlappingBoundingBoxList, boundingBox in zip(overlappingBoundingBoxLists, theBoundingBoxList):
-        print("mergeBoundingBoxesAcrossFrames-len(overlappingBoundingBoxList):", len(overlappingBoundingBoxList),
-            ", >= OVERLAPTHRESHOLD?", (len(overlappingBoundingBoxList) >= OVERLAPTHRESHOLD),
-            ",overlappingBoundingBoxList:", overlappingBoundingBoxList,", boundingBox:", boundingBox),
-        print("mergeBoundingBoxesAcrossFrames-frameNumber<BOUNDINDBOXCOLLECTIONSIZE?", (frameNumber<BOUNDINDBOXCOLLECTIONSIZE),
-            ", len(overlappingBoundingBoxList) == frameNumber?", (len(overlappingBoundingBoxList) == frameNumber)),
+        print("mergeBoundingBoxesAcrossFrames-boundingBox:", boundingBox, " overlaps=",len(overlappingBoundingBoxList),
+            ", >= "+str(OVERLAPTHRESHOLD)+"?", (len(overlappingBoundingBoxList) >= OVERLAPTHRESHOLD),
+            ", overlappingBoundingBoxList:", overlappingBoundingBoxList)
+        #print("mergeBoundingBoxesAcrossFrames-frameNumber<BOUNDINDBOXCOLLECTIONSIZE=="+str(BOUNDINDBOXCOLLECTIONSIZE)+"?", (frameNumber<BOUNDINDBOXCOLLECTIONSIZE),
+        #    ", len(overlappingBoundingBoxList) == frameNumber?", (len(overlappingBoundingBoxList) == frameNumber)),
         if (len(overlappingBoundingBoxList) > 0): # any overlapping boxes?
             if (    (len(overlappingBoundingBoxList) >= OVERLAPTHRESHOLD)
             or (frameNumber<BOUNDINDBOXCOLLECTIONSIZE and (len(overlappingBoundingBoxList) >= 2)) ): # then there is a overlapping bounding box in every frame
@@ -178,7 +187,7 @@ def processLabelBoundingBoxes(theLabelBoundingBoxArray):
     mergedBoundingBoxes=mergeBoundingBoxesAcrossFrames(labelBoundingBoxCollection, theLabelBoundingBoxArray)
     labelBoundingBoxCollection[currentBoxSlot]=theLabelBoundingBoxArray
     currentBoxSlot=(currentBoxSlot+1)%BOUNDINDBOXCOLLECTIONSIZE
-    print("processLabelBoundingBoxes-mergedBoundingBoxes:", mergedBoundingBoxes, ", labelBoundingBoxCollection:", labelBoundingBoxCollection)
+    if TESTING : print("processLabelBoundingBoxes-mergedBoundingBoxes:", mergedBoundingBoxes, ", labelBoundingBoxCollection@"+str(currentBoxSlot)+":", labelBoundingBoxCollection)
     return mergedBoundingBoxes
 
 def bumpFrameNumber():
@@ -215,14 +224,14 @@ def process_image(videoFrame):
     thresholdMap,_,heatMap =FindCars.makeThresholdMap(videoFrame, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
 
     #print("process_image-after makeThresholdMap")
-    annotatedImage, labelBoundingBoxes=FindCars.drawLabelsOnImage(videoFrame, thresholdMap) # drawLabelsOnImage makes a copy of the image
+    annotatedImage, labelBoundingBoxes=FindCars.drawLabelsOnImage(videoFrame, thresholdMap, thick=1) # drawLabelsOnImage makes a copy of the image
 
     #print("process_image-labelBoundingBoxCollection.shape:", labelBoundingBoxCollection.shape, ", len(labelBoundingBoxes):", len(labelBoundingBoxes))
-    #consolidatedBoundingBoxes=processLabelBoundingBoxes(labelBoundingBoxes)
-    #print("process_image-currentBoxSlot:", currentBoxSlot, ", consolidatedBoundingBoxes:", consolidatedBoundingBoxes)
+    consolidatedBoundingBoxes=processLabelBoundingBoxes(labelBoundingBoxes)
+    print("process_image-currentBoxSlot:", currentBoxSlot, ", consolidatedBoundingBoxes:", consolidatedBoundingBoxes)
 
-    #if len(consolidatedBoundingBoxes) > 0 : 
-    #    annotatedImage=FindCars.drawBoxes(annotatedImage, consolidatedBoundingBoxes[0], color=(255,255,0))
+    if len(consolidatedBoundingBoxes) > 0 : 
+        annotatedImage=FindCars.drawBoxes(annotatedImage, consolidatedBoundingBoxes, color=(255,255,0))
 
     #print("process_image-after drawLabelsOnImage")
     annotateThresholdImage = lambda axes : axes.text(0.1, 0.9, ("frame: "+str(frameNumber)
@@ -248,8 +257,8 @@ def processProjectVideo():
     ## Where start_second and end_second are integer values representing the start and end of the subclip
     ## You may also uncomment the following line for a subclip of the first 5 seconds
     ##clip2 = VideoFileClip('test_videos/solidYellowLeft.mp4').subclip(0,5)
-    video = VideoFileClip('./project_video.mp4')
-    #video = VideoFileClip("./test_video.mp4")
+    #video = VideoFileClip('./project_video.mp4')
+    video = VideoFileClip("./test_video.mp4")
     duration = video.duration
     #duration=31.4
     numberOfClips=int(round(duration/float(CLIPLENGTH)+0.5))
@@ -311,8 +320,38 @@ def testMergeBoundingBoxesAcrossFrames():
     #print("testMergeBoundingBoxesAcrossFrames-theLabelBoundingBoxArray:",theLabelBoundingBoxArray)
     #mergedBoundingBoxes=mergeBoundingBoxesAcrossFrames(labelBoundingBoxCollection, theLabelBoundingBoxArray)
 
+def testProcessImage():
+    import matplotlib.image as mpimg
+
+    global frameNumber
+    global labelBoundingBoxCollection
+    global TESTING
+    TESTING=True
+
+    labelBoundingBoxCollection= [ 
+                                    list([((256, 400), (382, 514)), ((384, 400), (401, 475)), ((748, 400), (939, 526)), ((1052, 419), (1188, 510)), ((201, 438), (229, 494))]),
+                                    list([((224, 400), (373, 532)), ((1049, 400), (1207, 513)), ((844, 419), (920, 494)), ((883, 496), (920, 501)), ((76, 512), (126, 577)), ((115, 512), (126, 513))]),
+                                    list([((825, 400), (927, 501)), ((134, 419), (357, 551)), ((1113, 419), (1163, 494)), ((806, 425), (817, 475)), ((1171, 425), (1188, 475)), ((115, 496), (126, 514)), ((128, 496), (132, 513)), ((44, 502), (75, 513)), ((86, 502), (110, 542)), ((112, 502), (113, 514)), ((44, 515), (75, 526)), ((44, 528), (75, 532)), ((96, 528), (101, 542)), ((86, 553), (94, 571))]),
+                                    list([((288, 400), (439, 514)), ((793, 400), (945, 526)), ((1036, 400), (1208, 526)), ((441, 419), (459, 475)), ((96, 457), (151, 513)), ((153, 457), (155, 510)), ((710, 457), (727, 475)), ((768, 457), (785, 501)), ((76, 476), (88, 510))]),
+                                    list([((204, 400), (402, 532)), ((819, 400), (945, 527)), ((1075, 400), (1188, 501)), ((0, 425), (171, 577)), ((806, 425), (817, 501)), ((1056, 438), (1073, 475))])
+                                ]
+    frameNumber=0
+
+    imageName="./test_images/LastImage.jpg"
+    videoFrame = mpimg.imread(imageName)
+    annotatedImage=process_image(videoFrame)
+
+    import matplotlib.pyplot as plt
+    plt.imshow(annotatedImage)
+
+    plt.show()
+    showImages.savefig('./output_images/TestingProcessVideo.png')
+    plt.close()
+
+
 #testProcessImage()
 #testMergeBoundingBoxesAcrossFrames()
+#testProcessImage()
 processProjectVideo()
 
 

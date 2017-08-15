@@ -5,6 +5,25 @@ from scipy.ndimage.measurements import label
 
 TESTING=False
 
+#https://stackoverflow.com/questions/21275714/check-rectangle-inside-rectangle-in-python
+#def contains(r1, r2):
+#   return r1.x1 < r2.x1 < r2.x2 < r1.x2 and r1.y1 < r2.y1 < r2.y2 < r1.y2
+def isCompletelyContainedBy(r1, r2): # r1 contains r2?
+    r1x1=r1[0][0]
+    r1y1=r1[0][1]
+    r1x2=r1[1][0]
+    r1y2=r1[1][1]
+
+    r2x1=r2[0][0]
+    r2y1=r2[0][1]
+    r2x2=r2[1][0]
+    r2y2=r2[1][1]
+
+    return r1x1 < r2x1 < r2x2 < r1x2 and r1y1 < r2y1 < r2y2 < r1y2
+
+def isEitherCompletelyContainedBy(r1, r2): # r1 contains r2 or r2 contains r1
+    return isCompletelyContainedBy(r1,r2) or isCompletelyContainedBy(r2,r1)
+
 # http://answers.opencv.org/question/90455/how-to-perform-intersection-or-union-operations-on-a-rect-in-python/
 def union(a,b):
     #print("union-a:", a, ", b:", b, ", a[0]:", a[0], ", b[0];", b[0])
@@ -177,6 +196,7 @@ def drawBoxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Make a copy of the image
     imcopy = np.copy(img)
     # Iterate through the bounding boxes
+    print("drawBoxes-bboxes:", bboxes)
     for bbox in bboxes:
         # Draw a rectangle given bbox coordinates
         cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
@@ -242,10 +262,10 @@ def findLabels(heatMap):
     print("findLabels-len(labels):", len(labels), ", labels[1]:", labels[1])
     return labels
 
-def drawLabelsOnImage(imageToLabel, heatMap, color=(0,255,0)):
+def drawLabelsOnImage(imageToLabel, heatMap, color=(0,255,0), thick=6):
     labels=findLabels(heatMap)
     boundingBoxes=findBoundingBoxesFromLabels(labels)
-    return drawBoxes(imageToLabel, boundingBoxes, color=(0,255,0)), boundingBoxes  # drawBoxes makes an image copy
+    return drawBoxes(imageToLabel, boundingBoxes, color, thick), boundingBoxes  # drawBoxes makes an image copy
     #return imageToLabel # even though it was written on already
 
 def makeThresholdMap(image, findCars, scales=[1.5], percentOfHeapmapToToss=.5):

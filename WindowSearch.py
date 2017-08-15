@@ -22,7 +22,7 @@ scaler= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
 print('scaler: ', scaler, ", get_params:", scaler.get_params(deep=True),
     ", mean:", scaler.mean_, ", len(mean):", len(scaler.mean_),
     ", scale:", scaler.scale_, ", len(scale):", len(scaler.scale_))
-#scaler=None
+scaler=None
 
 from skimage.feature import hog
 #from lesson_functions import *
@@ -255,7 +255,7 @@ t=time.time()
 
 #image = mpimg.imread('bbox-example-image.jpg')
 imageNames=glob.glob("./test_images/*.jpg")
-imageNames=["./test_images/test1.jpg"]
+#imageNames=["./test_images/test1.jpg"]
 fig = plt.figure(figsize=(len(imageNames)*5, 2*5))
 for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
 
