@@ -257,8 +257,9 @@ t=time.time()
 imageNames=glob.glob("./test_images/*.jpg")
 #imageNames=["./test_images/test1.jpg"]
 #fig = plt.figure(figsize=(len(imageNames)*5, 2*5))
-fig = plt.figure(figsize=(7,3))
 for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
+
+    fig = plt.figure(figsize=(7,3))
 
     image = mpimg.imread(imageName)
     draw_image = np.copy(image)
