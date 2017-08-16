@@ -25,7 +25,7 @@ if LINEAR:
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
     # len(SCALES)*.125, only detect left hand car
     # .1 detects both cars, but a lot of other stuff to the left (probably in multiple images)
-    PERCENTOFBOUNDINGBOXESTOTOSS= .2
+    PERCENTOFBOUNDINGBOXESTOTOSS= .3
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
@@ -103,7 +103,7 @@ def convertFigureToImage(figure):
 
 # .5: pretty much only sees left car
 # .3: is good
-BOUNDINGBOXOVERLAP=.3
+BOUNDINGBOXOVERLAP=.4
 
 def isBoundingBoxOverlapping(theBondingBox1, theBoundingBox2, intersectionOverUnion=BOUNDINGBOXOVERLAP):
     return FindCars.isEitherCompletelyContainedBy(theBondingBox1, theBoundingBox2) \
@@ -152,7 +152,7 @@ def mergeOverlappingBoundingBoxes(theBoundingBoxList, theBoundingBox):
         ", theBoundingBox:", theBoundingBox, ", theBoundingBoxList:", theBoundingBoxList)
     return mergedBoundingBox;
 
-BOUNDINDBOXCOLLECTIONSIZE=5
+BOUNDINDBOXCOLLECTIONSIZE=6
 
 OVERLAPTHRESHOLD=3
 
