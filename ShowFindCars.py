@@ -66,7 +66,7 @@ boundingBoxList=[]
 #img = mpimg.imread('test_image.jpg')
 imageNames=glob.glob("./test_images/*.jpg")
 #imageNames=["./test_images/test1.jpg"]
-fig = plt.figure(figsize=(len(imageNames)*5, 2*5))
+#fig = plt.figure(figsize=(len(imageNames)*5, 2*5))
 for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     img = mpimg.imread(imageName)
 
@@ -92,7 +92,8 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     #print("len(labels):", len(labels), ", labels[1]:", labels[1])
 
     #out_img=FindCars.drawLabelsOnImage(out_img, thresholdMap) # drawLabelsOnImage makes a copy of the image
-    out_img=FindCars.drawLabelsOnImage(img, thresholdMap) # drawLabelsOnImage makes a copy of the image
+    out_img, boundingBoxes=FindCars.drawLabelsOnImage(img, thresholdMap) # drawLabelsOnImage makes a copy of the image
+    #print ("out_img-type:", type(out_img), ", len:", len(out_img), ", out_img:", out_img)
     cv2.rectangle(out_img,(0, ystart),(out_img.shape[1],ystop),(0,255,255),6) 
 
 
@@ -117,4 +118,10 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     plt.tight_layout()
     plt.show()
 
-plt.close()
+    imageNamePath=imageName.split('/')
+    print("imageNamePath:", imageNamePath, ", imageNamePath[-1]:", imageNamePath[-1])
+    showImages.savefig("./output_images/threshold/"+imageNamePath[-1])
+
+
+
+#plt.close()

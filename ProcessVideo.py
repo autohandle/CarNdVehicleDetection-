@@ -257,8 +257,8 @@ def processProjectVideo():
     ## Where start_second and end_second are integer values representing the start and end of the subclip
     ## You may also uncomment the following line for a subclip of the first 5 seconds
     ##clip2 = VideoFileClip('test_videos/solidYellowLeft.mp4').subclip(0,5)
-    #video = VideoFileClip('./project_video.mp4')
-    video = VideoFileClip("./test_video.mp4")
+    video = VideoFileClip('./project_video.mp4')
+    #video = VideoFileClip("./test_video.mp4")
     duration = video.duration
     #duration=31.4
     numberOfClips=int(round(duration/float(CLIPLENGTH)+0.5))

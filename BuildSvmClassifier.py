@@ -464,7 +464,7 @@ def svmGridSearch(X_train, y_train, theParameters):
         stds = gridSearchSvc.cv_results_['std_test_score']
         for mean, std, params in zip(means, stds, gridSearchSvc.cv_results_['params']):
             print("%0.3f (+/-%0.03f) for %r"% (mean, std * 2, params))
-        return gridSearchSvc
+    return gridSearchSvc
 
 def svmRbfGridSearch(X_train, y_train):
     C_range = np.logspace(-2, 10, 13)
