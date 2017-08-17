@@ -5,6 +5,14 @@ import re
 
 import HogFeatures
 
+TESTING=False
+
+def printSingleImageFeatures(feature_image, color_space):
+    print("singleImageFeatures-color_space:", color_space)
+    for channel in range(0,feature_image.shape[2]): \
+        print("singleImageFeatures-max(feature_image["+str(channel)+"]):",np.max(feature_image[channel]),", min(feature_image):", np.min(feature_image[channel]), ", feature_image.shape:", feature_image.shape)
+
+
 def singleImageFeatures(img, color_space='RGB', spatial_size=(32, 32),
                         hist_bins=32, orient=9,
                         pix_per_cell=8, cell_per_block=2, hog_channel=0,
@@ -24,6 +32,8 @@ def singleImageFeatures(img, color_space='RGB', spatial_size=(32, 32),
         elif color_space == 'YCrCb':
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
     else: feature_image = np.copy(img)
+    if TESTING : printSingleImageFeatures(feature_image, color_space)
+
     #3) Compute spatial features if flag is set
     if spatial_feat == True:
         spatial_features = bin_spatial(feature_image, size=spatial_size)

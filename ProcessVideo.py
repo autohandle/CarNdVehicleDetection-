@@ -20,7 +20,7 @@ if LINEAR:
     #SCALES=np.linspace(.75, 2., 6)
     #SCALES=np.linspace(1., 2., 5)
     SCALES=np.linspace(1.2, 2., 5)
-    SCALES=np.append(SCALES, [2.5, 3., 3.5, 4.])
+    #SCALES=np.append(SCALES, [2.5, 3., 3.5, 4.])
     print("SCALES:", SCALES)
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
     # len(SCALES)*.125, only detect left hand car
@@ -41,6 +41,7 @@ svc= SaveAndRestoreClassifier.restoreClassifier(MODELFILENAME)
 print('restoring scaler from: ', SCALERFILENAME)
 X_scaler= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
 print('X_scaler: ', X_scaler, ", get_params:", X_scaler.get_params(deep=True), ", mean:", X_scaler.mean_, ", scale:", X_scaler.scale_)
+#X_scaler=None
 
 
 frameNumber=None

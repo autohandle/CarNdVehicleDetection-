@@ -40,7 +40,7 @@ from sklearn.cross_validation import train_test_split
 TESTING=False
 USESMALLSET=False
 USESMALLSSAMPLESIZE=True
-LINEAR=False
+LINEAR=True
 '''
 COLORSPACE = 'HLS' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 9

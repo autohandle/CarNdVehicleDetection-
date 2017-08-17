@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import HogFeatures
+import FeatureVectorConfig
 from scipy.ndimage.measurements import label
 
 TESTING=False
@@ -100,19 +101,46 @@ def computeIntersectionOverUnion(boundingBox1, boundingBox2):
 def combineImages(img, initial_img, α=0.8, λ=0.):
     return cv2.addWeighted(initial_img, α, img, 1.-α, λ)
 
-def convert_color(image, conv):
-    convertedImage=cv2.cvtColor(image, eval("cv2.COLOR_"+conv))
+def convert_color(image, color_space):
+    #print("convert_color-max(image):",np.max(image),", min(image):", np.min(image), ", color_space:", color_space)
+    #print ("convert_color-conv:", conv, "eval(cv2.COLOR_+conv):", eval("cv2.COLOR_"+conv))  
+    if False  :
+        convertedImage=cv2.cvtColor(image, eval("cv2.COLOR_RGB2"+color_space))
+        #print ("convert_color-convertedImage:", convertedImage)    
+    else :
+        if color_space != 'RGB':
+            if color_space == 'HSV':
+                convertedImage = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+            elif color_space == 'LUV':
+                convertedImage = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
+            elif color_space == 'HLS':
+                convertedImage = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+            elif color_space == 'YUV':
+                convertedImage = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+            elif color_space == 'YCrCb':
+                convertedImage = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+        else: convertedImage = np.copy(image)
+    #for channel in range(0,convertedImage.shape[2]):
+    #    print("convert_color-max(convertedImage["+str(channel)+"]):",np.max(convertedImage[channel]),", min(convertedImage):", np.min(convertedImage[channel]), ", convertedImage.shape:", convertedImage.shape)
     return convertedImage
+
+from sklearn.preprocessing import StandardScaler
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     
     draw_img = np.copy(img)
+    #print("find_cars-max(img):",np.max(img),", min(img):", np.min(img))
     cv2.rectangle(draw_img,(0, ystart),(draw_img.shape[1],ystop),(0,255,0),6) 
-    img = img.astype(np.float32)/255
-    
+    #img = img.astype(np.float32)/255
+    img = img.astype(np.float32)
     img_tosearch = img[ystart:ystop,:,:]
-    ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
+    #print ("img_tosearch:", img_tosearch)    
+    #ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
+    ctrans_tosearch = convert_color(img_tosearch, color_space=FeatureVectorConfig.COLORSPACE)
+    #ctrans_tosearch = convert_color(img_tosearch, color_space="RGB")
+    #ctrans_tosearch=img # the color conversion to HLS is making a negative S channel, so ignoring color conversion
+    #print ("ctrans_tosearch:", ctrans_tosearch)    
     if scale != 1:
         imshape = ctrans_tosearch.shape
         ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
@@ -121,7 +149,9 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
         ", ctrans_tosearch.shape:", ctrans_tosearch.shape, ", img_tosearch.shape:", img_tosearch.shape)
     ch1 = ctrans_tosearch[:,:,0]
     ch2 = ctrans_tosearch[:,:,1]
+    #print("find_cars-max(ch2):",np.max(ch2),", min(ch2):", np.min(ch2))
     ch3 = ctrans_tosearch[:,:,2]
+    #print("find_cars-max(ch3):",np.max(ch3),", min(ch3):", np.min(ch3))
 
     # Define blocks and steps as above
     nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
@@ -137,8 +167,11 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     
     # Compute individual channel HOG features for the entire image
     hog1 = HogFeatures.get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    #print("find_cars-max(hog1):",np.max(hog1),", min(hog1):", np.min(hog1))
     hog2 = HogFeatures.get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    #print("find_cars-max(hog2):",np.max(hog2),", min(hog2):", np.min(hog2))
     hog3 = HogFeatures.get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    #print("find_cars-max(hog3):",np.max(hog3),", min(hog3):", np.min(hog3))
 
     boundingBoxList=[]
     
@@ -152,6 +185,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel() 
             hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel() 
             hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+            #print ("hog_features:", hog_features)
 
             xleft = xpos*pix_per_cell # xleft,ytop in pixels
             ytop = ypos*pix_per_cell
@@ -163,19 +197,23 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             spatial_features = [] # bin_spatial(subimg, size=spatial_size)
             hist_features = [] # color_hist(subimg, nbins=hist_bins)
 
-            #if X_scaler==None:
-            #    X = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1).astype(np.float64)
-            #    X = np.concatenate([spatial_features, hist_features, hog_features]) # features
-            #    #print("find_cars-build scaler-X.shape):", X.shape)                        
-            #    # Fit a per-column scaler
-            #    scaler = StandardScaler().fit(X.reshape(-1, 1))
-            #    #print('scaler: ', scaler, ", get_params:", scaler.get_params(deep=True), ", mean:", scaler.mean_, ", scale:", scaler.scale_)
-            #else:
-            #    scaler=X_scaler
+            if X_scaler==None:
+                X = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1).astype(np.float64)
+                X = np.concatenate([spatial_features, hist_features, hog_features]) # features
+                print("find_cars-build scaler-X.shape):", X.shape, "X:", X)                        
+                # Fit a per-column scaler
+                scaler = StandardScaler().fit(X.reshape(-1, 1))
+                #print('scaler: ', scaler, ", get_params:", scaler.get_params(deep=True), ", mean:", scaler.mean_, ", scale:", scaler.scale_)
+            else:
+                scaler=X_scaler
 
             # Scale features and make a prediction
-            #test_features = scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
-            test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
+            #print("find_cars-max(hog_features):",np.max(hog_features),", min(hog_features):", np.min(hog_features))
+            test_features = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
+            #print("find_cars-max(test_features):",np.max(test_features),", min(test_features):", np.min(test_features))
+            test_features = scaler.transform(test_features)    
+            #print ("xb:", xb, ", yb:", yb, ", len(test_features):", len(hog_features))
+            #test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
             test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
