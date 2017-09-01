@@ -11,7 +11,11 @@ import numpy as np
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, 
                         vis=False, feature_vec=True):
     #print("get_hog_features-max(img):",np.max(img),", min(img):", np.min(img))
-    imageCopy=img.copy()-np.min(img)
+    imageMinimum=np.min(img)
+    if imageMinimum<0 :
+      imageCopy=img.copy()-np.min(img)
+    else:
+      imageCopy=img.copy()
     # Call with two outputs if vis==True
     if vis == True:
         features, hog_image = hog(imageCopy, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),

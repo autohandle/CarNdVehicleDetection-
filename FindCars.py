@@ -127,11 +127,12 @@ def convert_color(image, color_space):
 from sklearn.preprocessing import StandardScaler
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins, decisionFunctionThreshold=0.0):
     
     draw_img = np.copy(img)
     #print("find_cars-max(img):",np.max(img),", min(img):", np.min(img))
-    cv2.rectangle(draw_img,(0, ystart),(draw_img.shape[1],ystop),(0,255,0),6) 
+    # green bounding box for search
+    cv2.rectangle(draw_img,(0, ystart),(draw_img.shape[1],ystop),(0,255,0), 6) 
     #img = img.astype(np.float32)/255
     img = img.astype(np.float32)
     img_tosearch = img[ystart:ystop,:,:]
@@ -217,15 +218,18 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
-                #print("find_cars-xb:", xb, "steps , xpos:", xpos, "cells, yb:", yb, "steps , ypos:", ypos, "cells, xleft:", xleft
-                #    , "pixels, ytop:", ytop, "pixels, window:", window,"pixels")
-                xbox_left = np.int(xleft*scale)
-                ytop_draw = np.int(ytop*scale)
-                win_draw = np.int(window*scale)
-                #print("find_cars-draw at:", (xbox_left, ytop_draw+ystart), ",", (xbox_left+win_draw,ytop_draw+win_draw+ystart))
-                bounding_box=[(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)]
-                boundingBoxList+=[bounding_box]
-                cv2.rectangle(draw_img,bounding_box[0], bounding_box[1],(0,0,255),6)
+                decision_function = svc.decision_function(test_features)
+                if decision_function >= decisionFunctionThreshold:
+                    #print("find_cars-xb:", xb, "steps , xpos:", xpos, "cells, yb:", yb, "steps , ypos:", ypos, "cells, xleft:", xleft
+                    #    , "pixels, ytop:", ytop, "pixels, window:", window,"pixels")
+                    xbox_left = np.int(xleft*scale)
+                    ytop_draw = np.int(ytop*scale)
+                    win_draw = np.int(window*scale)
+                    #print("find_cars-draw at:", (xbox_left, ytop_draw+ystart), ",", (xbox_left+win_draw,ytop_draw+win_draw+ystart))
+                    bounding_box=[(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)]
+                    #print("find_cars-test_prediction:", test_prediction, ", decision_function:", decision_function, ", bounding_box:", bounding_box)
+                    boundingBoxList+=[bounding_box]
+                    cv2.rectangle(draw_img,bounding_box[0], bounding_box[1],(0,0,255),6)
     if TESTING : print("find_cars-boundingBoxList:",boundingBoxList)
     return boundingBoxList
 
@@ -311,13 +315,13 @@ def makeThresholdMap(image, findCars, scales=[1.5], percentOfHeapmapToToss=.5):
     boundingBoxList=[]
     for scale in scales:
         boundingBoxList += findCars(image, scale)
-    heatMap=addHeat(image.shape, boundingBoxList)
-    heatMapCounts=np.unique(heatMap, return_counts=True)
-    print("makeThresholdMap-heatMapCounts:", heatMapCounts, ", len(heatMapCounts):", len(heatMapCounts), ", len(heatMapCounts[0]):", len(heatMapCounts[0]))
-    heatMapMidpoint=heatMapCounts[0][int(round(len(heatMapCounts[0])*percentOfHeapmapToToss))]
-    thresholdMap=applyThreshold(heatMap, heatMapMidpoint)
+    unNormalizedHeatMap=addHeat(image.shape, boundingBoxList)
+    unNormalizedHeatMapCounts=np.unique(unNormalizedHeatMap, return_counts=True)
+    print("makeThresholdMap-unNormalizedHeatMapCounts:", unNormalizedHeatMapCounts, ", len(unNormalizedHeatMapCounts):", len(unNormalizedHeatMapCounts), ", len(unNormalizedHeatMapCounts[0]):", len(unNormalizedHeatMapCounts[0]))
+    unNormalizedHeatMapMidpoint=unNormalizedHeatMapCounts[0][int(round(len(unNormalizedHeatMapCounts[0])*percentOfHeapmapToToss))]
+    thresholdMap=applyThreshold(unNormalizedHeatMap, unNormalizedHeatMapMidpoint)
     print("makeThresholdMap-thresholdMap counts:", (np.unique(thresholdMap, return_counts=True)), ", len(thresholdMap):", len(thresholdMap), ", len(thresholdMap[0]):", len(thresholdMap[0]))
-    return thresholdMap, boundingBoxList, heatMap
+    return thresholdMap, boundingBoxList, unNormalizedHeatMap
 
 def testBoundingBox():
     bb1=((0,0), (1,1))

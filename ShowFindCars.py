@@ -19,16 +19,16 @@ if LINEAR:
     MODELFILENAME='./models/Linear.svm'
     SCALERFILENAME='./models/LinearScaler.svm'
     SCALES=[1.5] # Linear
-    SCALES=np.linspace(.75, 2., 6) # too many boounding boxes, esp at .75
-    SCALES=np.linspace(1., 2., 5) # too many boounding boxes, esp at .75
+    #SCALES=np.linspace(.75, 2., 6) # too many boounding boxes, esp at .75, .75 doesn't seem to add anything
+    SCALES=np.linspace(1., 2., 5)
     PERCENTOFBOUNDINGBOXESTOTOSS=.1 # Linear
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)/10.
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
     SCALERFILENAME='./models/RbfScaler.svm'
-    PERCENTOFBOUNDINGBOXESTOTOSS=.3 # Rbf
-    SCALES=[2.5] # Rbf
+    PERCENTOFBOUNDINGBOXESTOTOSS=.5 # Rbf
+    SCALES=np.linspace(1., 2., 5)
 
 from sklearn.externals import joblib
 
@@ -44,21 +44,22 @@ print('X_scaler: ', X_scaler, ", get_params:", X_scaler.get_params(deep=True), "
 #svc = dist_pickle["svc"]
 #X_scaler = dist_pickle["scaler"]
 #orient = dist_pickle["orient"]
-orient=FeatureVectorConfig.ORIENTATIONBINS
+ORIENT=FeatureVectorConfig.ORIENTATIONBINS
 #pix_per_cell = dist_pickle["pix_per_cell"]
-pix_per_cell = FeatureVectorConfig.PIXELSPERCELL
+PIX_PER_CELL = FeatureVectorConfig.PIXELSPERCELL
 #cell_per_block = dist_pickle["cell_per_block"]
-cell_per_block = FeatureVectorConfig.CELLSPERBLOCK
+CELL_PER_BLOCK = FeatureVectorConfig.CELLSPERBLOCK
 #spatial_size = dist_pickle["spatial_size"]
-spatial_size = FeatureVectorConfig.SPATIALSIZE
+SPATIAL_SIZE = FeatureVectorConfig.SPATIALSIZE
 #hist_bins = dist_pickle["hist_bins"]
-hist_bins = FeatureVectorConfig.HISTOGRAMBINS
+HIST_BINS = FeatureVectorConfig.HISTOGRAMBINS
+SVCDECISIONFUNCTIONTHRESHOLD=.8
 
 ystart = 400
 ystop = 656
 
     
-#out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+#out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, ORIENT, PIX_PER_CELL, CELL_PER_BLOCK, SPATIAL_SIZE, HIST_BINS)
 
 boundingBoxList=[]
 #SCALES=[1., 1.5, 1.75]
@@ -71,11 +72,11 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     img = mpimg.imread(imageName)
 
     #def makeThresholdMap(image, findCars, scales=[1.5], percentOfHeapmapToToss=.5):
-    findCars=lambda image, scale: FindCars.find_cars(image, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    thresholdMap,_,heatMap =FindCars.makeThresholdMap(img, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
+    findCars=lambda image, scale: FindCars.find_cars(image, ystart, ystop, scale, svc, X_scaler, ORIENT, PIX_PER_CELL, CELL_PER_BLOCK, SPATIAL_SIZE, HIST_BINS, SVCDECISIONFUNCTIONTHRESHOLD)
+    thresholdMap,boundingBoxList,heatMap =FindCars.makeThresholdMap(img, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
 
     #for scale in SCALES:
-    #    boundingBoxList += FindCars.find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    #    boundingBoxList += FindCars.find_cars(img, ystart, ystop, scale, svc, X_scaler, ORIENT, pix_per_cell, CELL_PER_BLOCK, SPATIAL_SIZE, HIST_BINS)
 
     #out_img=FindCars.drawBoxes(img, boundingBoxList) # blue boxes
     #out_img=img # skip the blue boxes
@@ -95,6 +96,8 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     out_img, boundingBoxes=FindCars.drawLabelsOnImage(img, thresholdMap) # drawLabelsOnImage makes a copy of the image
     #print ("out_img-type:", type(out_img), ", len:", len(out_img), ", out_img:", out_img)
     cv2.rectangle(out_img,(0, ystart),(out_img.shape[1],ystop),(0,255,255),6) 
+    # no good, because it is not weighted
+    #out_img=FindCars.drawBoxes(out_img, boundingBoxList, color=(0, 0, 255), thick=6)
 
 
     figureColumnCount=3

@@ -1,0 +1,3 @@
+#!/bin/bash
+python ./BuildSvmClassifier.py
+python ./ProcessVideo.py

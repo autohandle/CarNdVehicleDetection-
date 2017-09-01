@@ -18,14 +18,14 @@ if LINEAR:
     SCALERFILENAME='./models/LinearScaler.svm'
     SCALES=[1.5] # Linear
     #SCALES=np.linspace(.75, 2., 6)
-    #SCALES=np.linspace(1., 2., 5)
-    SCALES=np.linspace(1.2, 2., 5)
+    SCALES=np.linspace(1., 2., 5)
+    #SCALES=np.linspace(1.2, 2., 5)
     #SCALES=np.append(SCALES, [2.5, 3., 3.5, 4.])
     print("SCALES:", SCALES)
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
     # len(SCALES)*.125, only detect left hand car
     # .1 detects both cars, but a lot of other stuff to the left (probably in multiple images)
-    PERCENTOFBOUNDINGBOXESTOTOSS= .3
+    PERCENTOFBOUNDINGBOXESTOTOSS= 0.15
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
@@ -36,17 +36,20 @@ else:
 
 
 print('restoring model from: ', MODELFILENAME)
-svc= SaveAndRestoreClassifier.restoreClassifier(MODELFILENAME)
+SVC= SaveAndRestoreClassifier.restoreClassifier(MODELFILENAME)
 
 print('restoring scaler from: ', SCALERFILENAME)
-X_scaler= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
-print('X_scaler: ', X_scaler, ", get_params:", X_scaler.get_params(deep=True), ", mean:", X_scaler.mean_, ", scale:", X_scaler.scale_)
-#X_scaler=None
+X_SCALER= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
+print('X_SCALER: ', X_SCALER, ", get_params:", X_SCALER.get_params(deep=True), ", mean:", X_SCALER.mean_, ", scale:", X_SCALER.scale_)
+#X_SCALER=None
 
 
 frameNumber=None
-ystart = 400
-ystop = 656
+YSTART = 400
+YSTOP = 656
+
+SVCDECISIONFUNCTIONTHRESHOLD=.4
+
 
 thresholdMap=None
 heatMap=None
@@ -104,7 +107,7 @@ def convertFigureToImage(figure):
 
 # .5: pretty much only sees left car
 # .3: is good
-BOUNDINGBOXOVERLAP=.4
+BOUNDINGBOXOVERLAP=.3
 
 def isBoundingBoxOverlapping(theBondingBox1, theBoundingBox2, intersectionOverUnion=BOUNDINGBOXOVERLAP):
     return FindCars.isEitherCompletelyContainedBy(theBondingBox1, theBoundingBox2) \
@@ -153,9 +156,9 @@ def mergeOverlappingBoundingBoxes(theBoundingBoxList, theBoundingBox):
         ", theBoundingBox:", theBoundingBox, ", theBoundingBoxList:", theBoundingBoxList)
     return mergedBoundingBox;
 
-BOUNDINDBOXCOLLECTIONSIZE=6
+BOUNDINDBOXCOLLECTIONSIZE=8
+OVERLAPTHRESHOLD=6
 
-OVERLAPTHRESHOLD=3
 
 def mergeBoundingBoxesAcrossFrames(theFramesBoundingBoxArray, theBoundingBoxList): # boundingBoxCollection from labels
     global frameNumber
@@ -201,11 +204,11 @@ def bumpFrameNumber():
     return frameNumber
 
 def process_image(videoFrame):
-    global ystart
-    global ystop
+    global YSTART
+    global YSTOP
     global SCALES
-    global svc
-    global X_scaler
+    global SVC
+    global X_SCALER
 
     global thresholdMap
     global heatMap
@@ -215,12 +218,13 @@ def process_image(videoFrame):
 
     frameNumber=bumpFrameNumber()
 
-    findCars=lambda image,scale: FindCars.find_cars(image, ystart, ystop, scale, svc, X_scaler,
+    findCars=lambda image,scale: FindCars.find_cars(image, YSTART, YSTOP, scale, SVC, X_SCALER,
         FeatureVectorConfig.ORIENTATIONBINS,
         FeatureVectorConfig.PIXELSPERCELL,
         FeatureVectorConfig.CELLSPERBLOCK,
         FeatureVectorConfig.SPATIALSIZE,
-        FeatureVectorConfig.HISTOGRAMBINS
+        FeatureVectorConfig.HISTOGRAMBINS,
+        SVCDECISIONFUNCTIONTHRESHOLD
         )
     thresholdMap,_,heatMap =FindCars.makeThresholdMap(videoFrame, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
 
@@ -243,7 +247,7 @@ def process_image(videoFrame):
                                               transform = axes.transAxes,
                                               color='w')
     figure=plotFigure(annotatedImage, heatMap, thresholdMap, annotateThresholdImage)
-    cv2.rectangle(annotatedImage,(0, ystart),(annotatedImage.shape[1],ystop),(0,255,255), 2)
+    cv2.rectangle(annotatedImage,(0, YSTART),(annotatedImage.shape[1],YSTOP),(0,255,255), 2)
 
     #return convertFigureToImage(figure) # doesn't wprk on mac
     return annotatedImage
@@ -258,8 +262,10 @@ def processProjectVideo():
     ## Where start_second and end_second are integer values representing the start and end of the subclip
     ## You may also uncomment the following line for a subclip of the first 5 seconds
     ##clip2 = VideoFileClip('test_videos/solidYellowLeft.mp4').subclip(0,5)
+    
     video = VideoFileClip('./project_video.mp4')
     #video = VideoFileClip("./test_video.mp4")
+
     duration = video.duration
     #duration=31.4
     numberOfClips=int(round(duration/float(CLIPLENGTH)+0.5))

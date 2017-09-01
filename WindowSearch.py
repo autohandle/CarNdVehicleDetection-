@@ -22,7 +22,7 @@ scaler= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
 print('scaler: ', scaler, ", get_params:", scaler.get_params(deep=True),
     ", mean:", scaler.mean_, ", len(mean):", len(scaler.mean_),
     ", scale:", scaler.scale_, ", len(scale):", len(scaler.scale_))
-scaler=None
+#scaler=None
 
 from skimage.feature import hog
 #from lesson_functions import *
@@ -271,6 +271,7 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
 
     MINIMUMWINDOW=64
     MAXIMUMWINDOW=128
+    OVERLAP=0.8
 
     window_img=None
     windowSize=MINIMUMWINDOW
@@ -278,7 +279,7 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     while windowSize <= MAXIMUMWINDOW:
         print ("windowSize:", windowSize)
         windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
-                            xy_window=(windowSize, windowSize), xy_overlap=(0.5, 0.5))
+                            xy_window=(windowSize, windowSize), xy_overlap=(OVERLAP, OVERLAP))
 
         hot_windows = search_windows(image, windows, classifier, scaler, color_space=FeatureVectorConfig.COLORSPACE, 
                                 spatial_size=FeatureVectorConfig.SPATIALSIZE, hist_bins=FeatureVectorConfig.HISTOGRAMBINS, 
@@ -287,7 +288,6 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
                                 hog_channel=FeatureVectorConfig.HOGCHANNEL, spatial_feat=FeatureVectorConfig.SPATIALFEATURES, 
                                 hist_feat=FeatureVectorConfig.HISTOGRAMFEATURES, hog_feat=FeatureVectorConfig.HOGFEATURES)                       
 
-        window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
         windowSize = windowSize*2
         hotWindowList+=hot_windows
         
@@ -295,6 +295,7 @@ for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
     #plt.show()
 
     print("hotWindowList:", hotWindowList)
+    window_img = draw_boxes(draw_image, hotWindowList, color=(0, 0, 255), thick=6)
     def add_heat(heatmap, bbox_list):
         # Iterate through list of bboxes
         for box in bbox_list:
