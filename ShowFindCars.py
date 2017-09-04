@@ -21,8 +21,8 @@ if LINEAR:
     SCALES=[1.5] # Linear
     #SCALES=np.linspace(.75, 2., 6) # too many boounding boxes, esp at .75, .75 doesn't seem to add anything
     SCALES=np.linspace(1., 2., 5)
-    PERCENTOFBOUNDINGBOXESTOTOSS=.1 # Linear
     PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)/10.
+    PERCENTOFBOUNDINGBOXESTOTOSS=.5 # Linear
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
@@ -38,7 +38,9 @@ svc= SaveAndRestoreClassifier.restoreClassifier(MODELFILENAME)
 
 print('restoring scaler from: ', SCALERFILENAME)
 X_scaler= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
-print('X_scaler: ', X_scaler, ", get_params:", X_scaler.get_params(deep=True), ", mean:", X_scaler.mean_, ", scale:", X_scaler.scale_)
+print('X_scaler: ', X_scaler, ", get_params:", X_scaler.get_params(deep=True),
+    ", mean:", X_scaler.mean_, ", len(mean):", len(X_scaler.mean_),
+    ", scale:", X_scaler.scale_, ", len(scale):", len(X_scaler.scale_))
 
 #dist_pickle = pickle.load( open("svc_pickle.p", "rb" ) )
 #svc = dist_pickle["svc"]
@@ -69,11 +71,12 @@ imageNames=glob.glob("./test_images/*.jpg")
 #imageNames=["./test_images/test1.jpg"]
 #fig = plt.figure(figsize=(len(imageNames)*5, 2*5))
 for imageName,imageId in zip(imageNames, range(0, len(imageNames))):
+    FindCars.clearHeatmapStack()
     img = mpimg.imread(imageName)
 
     #def makeThresholdMap(image, findCars, scales=[1.5], percentOfHeapmapToToss=.5):
     findCars=lambda image, scale: FindCars.find_cars(image, ystart, ystop, scale, svc, X_scaler, ORIENT, PIX_PER_CELL, CELL_PER_BLOCK, SPATIAL_SIZE, HIST_BINS, SVCDECISIONFUNCTIONTHRESHOLD)
-    thresholdMap,boundingBoxList,heatMap =FindCars.makeThresholdMap(img, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
+    thresholdMap,boundingBoxList,heatMap,_ =FindCars.makeThresholdMap(img, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
 
     #for scale in SCALES:
     #    boundingBoxList += FindCars.find_cars(img, ystart, ystop, scale, svc, X_scaler, ORIENT, pix_per_cell, CELL_PER_BLOCK, SPATIAL_SIZE, HIST_BINS)

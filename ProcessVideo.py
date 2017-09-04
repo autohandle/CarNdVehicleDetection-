@@ -16,24 +16,29 @@ TESTING=False
 if LINEAR:
     MODELFILENAME='./models/Linear.svm'
     SCALERFILENAME='./models/LinearScaler.svm'
-    SCALES=[1.5] # Linear
+    #SCALES=[1.5] # Linear
     #SCALES=np.linspace(.75, 2., 6)
     SCALES=np.linspace(1., 2., 5)
     #SCALES=np.linspace(1.2, 2., 5)
     #SCALES=np.append(SCALES, [2.5, 3., 3.5, 4.])
-    print("SCALES:", SCALES)
-    PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
+    #PERCENTOFBOUNDINGBOXESTOTOSS=len(SCALES)*.125 # Linear
     # len(SCALES)*.125, only detect left hand car
     # .1 detects both cars, but a lot of other stuff to the left (probably in multiple images)
-    PERCENTOFBOUNDINGBOXESTOTOSS= 0.15
+    PERCENTOFBOUNDINGBOXESTOTOSS= 0.4
+    SVCDECISIONFUNCTIONTHRESHOLD=0.65
+
 
 else:
     MODELFILENAME='./models/RbfClassifier.svm'
     SCALERFILENAME='./models/RbfScaler.svm'
-    PERCENTOFBOUNDINGBOXESTOTOSS=.5 # Rbf
-    SCALES=[2.5] # Rbf
-    SCALES=np.linspace(1.2, 1.8, 4)
+    PERCENTOFBOUNDINGBOXESTOTOSS=.3 # Rbf
+    #SCALES=[2.5] # Rbf
+    SCALES=np.linspace(1., 2., 5)
+    SVCDECISIONFUNCTIONTHRESHOLD=.3
 
+# .5: pretty much only sees left car
+# .3: is good
+BOUNDINGBOXOVERLAP=0.5
 
 print('restoring model from: ', MODELFILENAME)
 SVC= SaveAndRestoreClassifier.restoreClassifier(MODELFILENAME)
@@ -42,13 +47,13 @@ print('restoring scaler from: ', SCALERFILENAME)
 X_SCALER= SaveAndRestoreClassifier.restoreScaler(SCALERFILENAME)
 print('X_SCALER: ', X_SCALER, ", get_params:", X_SCALER.get_params(deep=True), ", mean:", X_SCALER.mean_, ", scale:", X_SCALER.scale_)
 #X_SCALER=None
+print("SCALES:", SCALES)
 
 
 frameNumber=None
 YSTART = 400
 YSTOP = 656
 
-SVCDECISIONFUNCTIONTHRESHOLD=.4
 
 
 thresholdMap=None
@@ -105,10 +110,6 @@ def convertFigureToImage(figure):
 
     return data
 
-# .5: pretty much only sees left car
-# .3: is good
-BOUNDINGBOXOVERLAP=.3
-
 def isBoundingBoxOverlapping(theBondingBox1, theBoundingBox2, intersectionOverUnion=BOUNDINGBOXOVERLAP):
     return FindCars.isEitherCompletelyContainedBy(theBondingBox1, theBoundingBox2) \
         or FindCars.computeIntersectionOverUnion(theBondingBox1, theBoundingBox2)
@@ -156,8 +157,8 @@ def mergeOverlappingBoundingBoxes(theBoundingBoxList, theBoundingBox):
         ", theBoundingBox:", theBoundingBox, ", theBoundingBoxList:", theBoundingBoxList)
     return mergedBoundingBox;
 
-BOUNDINDBOXCOLLECTIONSIZE=8
-OVERLAPTHRESHOLD=6
+BOUNDINDBOXCOLLECTIONSIZE=10
+OVERLAPTHRESHOLD=8
 
 
 def mergeBoundingBoxesAcrossFrames(theFramesBoundingBoxArray, theBoundingBoxList): # boundingBoxCollection from labels
@@ -226,10 +227,10 @@ def process_image(videoFrame):
         FeatureVectorConfig.HISTOGRAMBINS,
         SVCDECISIONFUNCTIONTHRESHOLD
         )
-    thresholdMap,_,heatMap =FindCars.makeThresholdMap(videoFrame, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
+    normalizedThresholdMap,_,heatMap,boundingBoxWeights =FindCars.makeThresholdMap(videoFrame, findCars, SCALES, PERCENTOFBOUNDINGBOXESTOTOSS)
 
     #print("process_image-after makeThresholdMap")
-    annotatedImage, labelBoundingBoxes=FindCars.drawLabelsOnImage(videoFrame, thresholdMap, thick=1) # drawLabelsOnImage makes a copy of the image
+    annotatedImage, labelBoundingBoxes=FindCars.drawLabelsOnImage(videoFrame, normalizedThresholdMap, thick=1) # drawLabelsOnImage makes a copy of the image
 
     #print("process_image-labelBoundingBoxCollection.shape:", labelBoundingBoxCollection.shape, ", len(labelBoundingBoxes):", len(labelBoundingBoxes))
     consolidatedBoundingBoxes=processLabelBoundingBoxes(labelBoundingBoxes)
@@ -246,7 +247,7 @@ def process_image(videoFrame):
                                               verticalalignment='top',
                                               transform = axes.transAxes,
                                               color='w')
-    figure=plotFigure(annotatedImage, heatMap, thresholdMap, annotateThresholdImage)
+    figure=plotFigure(annotatedImage, heatMap, normalizedThresholdMap, annotateThresholdImage)
     cv2.rectangle(annotatedImage,(0, YSTART),(annotatedImage.shape[1],YSTOP),(0,255,255), 2)
 
     #return convertFigureToImage(figure) # doesn't wprk on mac

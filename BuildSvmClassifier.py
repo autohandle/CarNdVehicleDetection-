@@ -42,55 +42,21 @@ USESMALLSET=False
 USESMALLSSAMPLESIZE=True
 LINEAR=True
 '''
-COLORSPACE = 'HLS' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-orient = 9
-pix_per_cell = 8
-cell_per_block = 2
-hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-
-Grid scores on development set:
-
-0.970 (+/-0.021) for {'kernel': 'linear', 'C': 1e-05}
-0.981 (+/-0.022) for {'kernel': 'linear', 'C': 5e-05}
-0.983 (+/-0.012) for {'kernel': 'linear', 'C': 0.0001}
-0.985 (+/-0.010) for {'kernel': 'linear', 'C': 0.0005}
-0.985 (+/-0.010) for {'kernel': 'linear', 'C': 0.001}
-0.985 (+/-0.010) for {'kernel': 'linear', 'C': 0.01}
-0.985 (+/-0.010) for {'kernel': 'linear', 'C': 0.1}
-0.985 (+/-0.010) for {'kernel': 'linear', 'C': 1}
-gridSearchSvc.best_estimator_: SVC(C=0.0005, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid=[{'kernel': ['linear'], 'C': [1e-05, 5e-05, 0.0001, 0.0005, 0.001, 0.01, 0.1, 1]}],
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 132.7  seconds
-0.0 Seconds to train SVC...on: 800  samples
-Training Accuracy of SVC =  1.0
-Test Accuracy of SVC =  0.965
 
 LINEAR=True
 
-extract_features-len(features): 8792 , len(features[0]): 5292
-extract_features-len(features): 8968 , len(features[0]): 5292
-181.9 Seconds to extract HOG features...
 Using: 9 orientations 8 pixels per cell and 2 cells per block
-Feature vector length: 5292
-Best parameters set found on development set: {'C': 0.0003, 'kernel': 'linear'} , best score: 0.985501126126
+Feature vector length: 6108
+svmGridSearch-theParameters: [{'C': [0.0001, 0.0003, 0.0004, 0.0005], 'kernel': ['linear']}]
+svmGridSearch-Best parameters set found on development set: {'kernel': 'linear', 'C': 0.0001} , best score: 0.990427927928
 
-Grid scores on development set:
+svmGridSearch-Grid scores on development set:
 
-0.984 (+/-0.008) for {'C': 0.0001, 'kernel': 'linear'}
-.986 (+/-0.004) for {'C': 0.0003, 'kernel': 'linear'}
-0.985 (+/-0.005) for {'C': 0.0004, 'kernel0': 'linear'}
-0.985 (+/-0.004) for {'C': 0.0005, 'kernel': 'linear'}
-
-gridSearchSvc.best_estimator_: SVC(C=0.0003, cache_size=200, class_weight=None, coef0=0.0,
+0.990 (+/-0.002) for {'kernel': 'linear', 'C': 0.0001}
+0.990 (+/-0.001) for {'kernel': 'linear', 'C': 0.0003}
+0.990 (+/-0.002) for {'kernel': 'linear', 'C': 0.0004}
+0.990 (+/-0.002) for {'kernel': 'linear', 'C': 0.0005}
+gridSearchSvc.best_estimator_: SVC(C=0.0001, cache_size=200, class_weight=None, coef0=0.0,
   decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
   max_iter=-1, probability=False, random_state=None, shrinking=True,
   tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
@@ -101,197 +67,23 @@ gridSearchSvc.best_estimator_: SVC(C=0.0003, cache_size=200, class_weight=None, 
        fit_params={}, iid=True, n_jobs=1,
        param_grid=[{'C': [0.0001, 0.0003, 0.0004, 0.0005], 'kernel': ['linear']}],
        pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 5390.49  seconds
-
-RBF:
-
-svmGridSearch-theParameters: {'kernel': ['rbf'], 'C': array([  1.00000000e-02,   1.00000000e-01,   1.00000000e+00,
-         1.00000000e+01,   1.00000000e+02,   1.00000000e+03,
-         1.00000000e+04,   1.00000000e+05,   1.00000000e+06,
-         1.00000000e+07,   1.00000000e+08,   1.00000000e+09,
-         1.00000000e+10]), 'gamma': array([  1.00000000e-09,   1.00000000e-08])}
-svmGridSearch-Best parameters set found on development set: {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1e-08} , best score: 1.0
-
-svmGridSearch-Grid scores on development set:
-
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 0.01, 'gamma': 1.0000000000000001e-09}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 0.01, 'gamma': 1e-08}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 0.10000000000000001, 'gamma': 1.0000000000000001e-09}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 0.10000000000000001, 'gamma': 1e-08}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 1.0, 'gamma': 1.0000000000000001e-09}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 1.0, 'gamma': 1e-08}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 10.0, 'gamma': 1.0000000000000001e-09}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 10.0, 'gamma': 1e-08}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 100.0, 'gamma': 1.0000000000000001e-09}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 100.0, 'gamma': 1e-08}
-0.502 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1.0000000000000001e-09}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1.0000000000000001e-09}
-1.000 (+/-0.000) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1e-08}
-1.000 (+/-0.000) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1e-08}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 1000000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 1000000.0, 'gamma': 1e-08}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 10000000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 10000000.0, 'gamma': 1e-08}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 100000000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 100000000.0, 'gamma': 1e-08}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 1000000000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 1000000000.0, 'gamma': 1e-08}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 10000000000.0, 'gamma': 1.0000000000000001e-09}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 10000000000.0, 'gamma': 1e-08}
-gridSearchSvc.best_estimator_: SVC(C=10000.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma=1e-08, kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid={'kernel': ['rbf'], 'C': array([  1.00000e-02,   1.00000e-01,   1.00000e+00,   1.00000e+01,
-         1.00000e+02,   1.00000e+03,   1.00000e+04,   1.00000e+05,
-         1.00000e+06,   1.00000e+07,   1.00000e+08,   1.00000e+09,
-         1.00000e+10]), 'gamma': array([  1.00000e-09,   1.00000e-08])},
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 575.62  seconds
-
-vmGridSearch-Grid scores on development set:
-
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1.0000000000000001e-09}
-0.995 (+/-0.015) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 9.9999999999999995e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 9.9999999999999995e-07}
-0.996 (+/-0.015) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1.0000000000000001e-05}
-0.996 (+/-0.010) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 0.0001}
-0.859 (+/-0.025) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 0.001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 0.01}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 0.10000000000000001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 10.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 100.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 1000.0, 'gamma': 1000.0}
-0.995 (+/-0.015) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1.0000000000000001e-09}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 9.9999999999999995e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 9.9999999999999995e-07}
-0.996 (+/-0.015) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1.0000000000000001e-05}
-0.996 (+/-0.010) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 0.0001}
-0.859 (+/-0.025) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 0.001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 0.01}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 0.10000000000000001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 10.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 100.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 10000.0, 'gamma': 1000.0}
-0.999 (+/-0.005) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1.0000000000000001e-09}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 9.9999999999999995e-08}
-0.998 (+/-0.010) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 9.9999999999999995e-07}
-0.996 (+/-0.015) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1.0000000000000001e-05}
-0.996 (+/-0.010) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 0.0001}
-0.859 (+/-0.025) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 0.001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 0.01}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 0.10000000000000001}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 10.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 100.0}
-0.504 (+/-0.003) for {'kernel': 'rbf', 'C': 100000.0, 'gamma': 1000.0}
-gridSearchSvc.best_estimator_: SVC(C=100000.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma=1.0000000000000001e-09,
-  kernel='rbf', max_iter=-1, probability=False, random_state=None,
-  shrinking=True, tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid={'kernel': ['rbf'], 'C': array([   1000.,   10000.,  100000.]), 'gamma': array([  1.00000e-09,   1.00000e-08,   1.00000e-07,   1.00000e-06,
-         1.00000e-05,   1.00000e-04,   1.00000e-03,   1.00000e-02,
-         1.00000e-01,   1.00000e+00,   1.00000e+01,   1.00000e+02,
-         1.00000e+03])},
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 1012.82  seconds
-Training Accuracy of SVC =  1.0
-Test Accuracy of SVC =  1.0
+       scoring=None, verbose=0)  in: 3366.52  seconds
+0.0 Seconds to train SVC...on: 14208  samples
+Training Accuracy of SVC =  0.9955
+Test Accuracy of SVC =  0.9913
+My SVC predicts:  [ 1.  0.  1. ...,  0.  0.  0.]
+For these 3552 labels:  [ 1.  0.  1. ...,  0.  0.  0.]
+30.03418 Seconds to predict 3552 labels with SVC
+saving model to:  ./models/HogClassify.svm
+saveClassifier-saving model to: <./models/HogClassify.svm>
+restoring model from:  ./models/HogClassify.svm
+restoreClassifier-restoring model from: <./models/HogClassify.svm>
+My restored SVM classifier predicts:  [ 1.  0.  1. ...,  0.  0.  0.]
+For these 3552 labels:  [ 1.  0.  1. ...,  0.  0.  0.]
+Test Accuracy of restored classifier =  0.9913
+90.2915 Seconds to predict 3552 labels with SVC
 
 
-svmGridSearch-Grid scores on development set:
-
-0.988 (+/-0.006) for {'gamma': 9.9999999999999995e-08, 'kernel': 'rbf', 'C': 1000.0}
-0.987 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'kernel': 'rbf', 'C': 1000.0}
-0.990 (+/-0.006) for {'gamma': 1.0000000000000001e-05, 'kernel': 'rbf', 'C': 1000.0}
-0.987 (+/-0.009) for {'gamma': 9.9999999999999995e-08, 'kernel': 'rbf', 'C': 10000.0}
-0.987 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'kernel': 'rbf', 'C': 10000.0}
-0.990 (+/-0.006) for {'gamma': 1.0000000000000001e-05, 'kernel': 'rbf', 'C': 10000.0}
-0.987 (+/-0.009) for {'gamma': 9.9999999999999995e-08, 'kernel': 'rbf', 'C': 100000.0}
-0.987 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'kernel': 'rbf', 'C': 100000.0}
-0.990 (+/-0.006) for {'gamma': 1.0000000000000001e-05, 'kernel': 'rbf', 'C': 100000.0}
-gridSearchSvc.best_estimator_: SVC(C=1000.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma=1.0000000000000001e-05,
-  kernel='rbf', max_iter=-1, probability=False, random_state=None,
-  shrinking=True, tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid={'gamma': array([  1.00000e-07,   1.00000e-06,   1.00000e-05]), 'kernel': ['rbf'], 'C': array([   1000.,   10000.,  100000.])},
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 425.41  seconds
-Training Accuracy of SVC =  1.0
-Test Accuracy of SVC =  0.9849
-
-svmGridSearch-Grid scores on development set:
-
-0.993 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'C': 1000.0, 'kernel': 'rbf'}
-0.994 (+/-0.010) for {'gamma': 1.0000000000000001e-05, 'C': 1000.0, 'kernel': 'rbf'}
-0.995 (+/-0.005) for {'gamma': 0.0001, 'C': 1000.0, 'kernel': 'rbf'}
-0.993 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'C': 10000.0, 'kernel': 'rbf'}
-0.994 (+/-0.010) for {'gamma': 1.0000000000000001e-05, 'C': 10000.0, 'kernel': 'rbf'}
-0.995 (+/-0.005) for {'gamma': 0.0001, 'C': 10000.0, 'kernel': 'rbf'}
-0.993 (+/-0.009) for {'gamma': 9.9999999999999995e-07, 'C': 100000.0, 'kernel': 'rbf'}
-0.994 (+/-0.010) for {'gamma': 1.0000000000000001e-05, 'C': 100000.0, 'kernel': 'rbf'}
-0.995 (+/-0.005) for {'gamma': 0.0001, 'C': 100000.0, 'kernel': 'rbf'}
-gridSearchSvc.best_estimator_: SVC(C=1000.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma=0.0001, kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid={'gamma': array([  1.00000e-06,   1.00000e-05,   1.00000e-04]), 'C': array([   1000.,   10000.,  100000.]), 'kernel': ['rbf']},
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 2139.94  seconds
-0.0 Seconds to train SVC...on: 4800  samples
-Training Accuracy of SVC =  1.0
-Test Accuracy of SVC =  0.9983
-
-vmGridSearch-Grid scores on development set:
-
-0.995 (+/-0.002) for {'gamma': 1.0000000000000001e-05, 'C': 1000.0, 'kernel': 'rbf'}
-0.996 (+/-0.003) for {'gamma': 0.0001, 'C': 1000.0, 'kernel': 'rbf'}
-0.865 (+/-0.008) for {'gamma': 0.001, 'C': 1000.0, 'kernel': 'rbf'}
-0.995 (+/-0.002) for {'gamma': 1.0000000000000001e-05, 'C': 10000.0, 'kernel': 'rbf'}
-0.996 (+/-0.003) for {'gamma': 0.0001, 'C': 10000.0, 'kernel': 'rbf'}
-0.865 (+/-0.008) for {'gamma': 0.001, 'C': 10000.0, 'kernel': 'rbf'}
-gridSearchSvc.best_estimator_: SVC(C=1000.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma=0.0001, kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
-       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-  max_iter=-1, probability=False, random_state=None, shrinking=True,
-  tol=0.001, verbose=False),
-       fit_params={}, iid=True, n_jobs=1,
-       param_grid={'gamma': array([  1.00000e-05,   1.00000e-04,   1.00000e-03]), 'C': array([  1000.,  10000.]), 'kernel': ['rbf']},
-       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
-       scoring=None, verbose=0)  in: 9510.53  seconds
-0.0 Seconds to train SVC...on: 8000  samples
-Training Accuracy of SVC =  1.0
-Test Accuracy of SVC =  0.997
 
 '''
 MODELFILENAME='./models/HogClassify.svm'
@@ -417,11 +209,21 @@ notcar_features = extract_features(nonvehicleImageNames, cspace=COLORSPACE, orie
 '''
 car_features = BuildFeatureVector.extract_features(vehicleImageNames, color_space=FeatureVectorConfig.COLORSPACE, orient=FeatureVectorConfig.ORIENTATIONBINS, 
                         pix_per_cell=FeatureVectorConfig.PIXELSPERCELL, cell_per_block=FeatureVectorConfig.CELLSPERBLOCK, 
-                        hog_channel=FeatureVectorConfig.HOGCHANNEL)
+                        hog_channel=FeatureVectorConfig.HOGCHANNEL,
+                        spatial_feat=FeatureVectorConfig.SPATIALFEATURES,
+                        spatial_size=FeatureVectorConfig.SPATIALSIZE,
+                        hist_feat=FeatureVectorConfig.HISTOGRAMFEATURES,
+                        hist_bins=FeatureVectorConfig.HISTOGRAMBINS,
+                        hog_feat=FeatureVectorConfig.HOGFEATURES)
 notcar_features = BuildFeatureVector.extract_features(nonvehicleImageNames, color_space=FeatureVectorConfig.COLORSPACE, orient=FeatureVectorConfig.ORIENTATIONBINS, 
                         pix_per_cell=FeatureVectorConfig.PIXELSPERCELL, cell_per_block=FeatureVectorConfig.CELLSPERBLOCK, 
-                        hog_channel=FeatureVectorConfig.HOGCHANNEL)
-t
+                        hog_channel=FeatureVectorConfig.HOGCHANNEL,
+                        spatial_feat=FeatureVectorConfig.SPATIALFEATURES,
+                        spatial_size=FeatureVectorConfig.SPATIALSIZE,
+                        hist_feat=FeatureVectorConfig.HISTOGRAMFEATURES,
+                        hist_bins=FeatureVectorConfig.HISTOGRAMBINS,
+                        hog_feat=FeatureVectorConfig.HOGFEATURES)
+
 t2 = time.time()
 print(round(t2-t, 2), 'Seconds to extract HOG features...')
 # Create an array stack of feature vectors

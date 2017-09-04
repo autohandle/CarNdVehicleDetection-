@@ -1,3 +1,5 @@
 #!/bin/bash
 python ./BuildSvmClassifier.py
+mv models/HogClassify.svm models/Linear.svm
+mv models/HogClassifyScaler.svm models/LinearScaler.svm
 python ./ProcessVideo.py

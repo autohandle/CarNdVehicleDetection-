@@ -98,6 +98,25 @@ def computeIntersectionOverUnion(boundingBox1, boundingBox2):
     assert iou <= 1.0
     return iou
 
+# Define a function to compute binned color features
+def bin_spatial(img, size=(32, 32)):
+    # Use cv2.resize().ravel() to create the feature vector
+    features = cv2.resize(img, size).ravel()
+    # Return the feature vector
+    return features
+
+# Define a function to compute color histogram features
+def color_hist(img, nbins=32, bins_range=(0, 256)):
+    # Compute the histogram of the color channels separately
+    channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
+    channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
+    channel3_hist = np.histogram(img[:,:,2], bins=nbins, range=bins_range)
+    # Concatenate the histograms into a single feature vector
+    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+    # Return the individual histograms, bin_centers and feature vector
+    #print("len(hist_features):", len(hist_features))
+    return hist_features
+
 def combineImages(img, initial_img, α=0.8, λ=0.):
     return cv2.addWeighted(initial_img, α, img, 1.-α, λ)
 
@@ -175,7 +194,9 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     #print("find_cars-max(hog3):",np.max(hog3),", min(hog3):", np.min(hog3))
 
     boundingBoxList=[]
+    decisionFunctionList=[]
     
+    if TESTING : print("find_cars-nxsteps:",nxsteps, ", nysteps:", nysteps, ", nxsteps*nysteps:", nxsteps*nysteps)
     for xb in range(nxsteps): # xb/yb in steps
         #print("find_cars-xb:", xb, ", xpos = xb*cells_per_step:", (xb*cells_per_step), ", xleft = xpos*pix_per_cell:", ((xb*cells_per_step)*pix_per_cell))
         for yb in range(nysteps):
@@ -196,8 +217,11 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
           
             # Get color features
             spatial_features = [] # bin_spatial(subimg, size=spatial_size)
+            if FeatureVectorConfig.SPATIALFEATURES: spatial_features = bin_spatial(subimg, size=spatial_size)
             hist_features = [] # color_hist(subimg, nbins=hist_bins)
+            if FeatureVectorConfig.HISTOGRAMFEATURES: hist_features = color_hist(subimg, nbins=hist_bins)
 
+            scaler=None
             if X_scaler==None:
                 X = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1).astype(np.float64)
                 X = np.concatenate([spatial_features, hist_features, hog_features]) # features
@@ -207,11 +231,12 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 #print('scaler: ', scaler, ", get_params:", scaler.get_params(deep=True), ", mean:", scaler.mean_, ", scale:", scaler.scale_)
             else:
                 scaler=X_scaler
-
+    
             # Scale features and make a prediction
             #print("find_cars-max(hog_features):",np.max(hog_features),", min(hog_features):", np.min(hog_features))
             test_features = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
-            #print("find_cars-max(test_features):",np.max(test_features),", min(test_features):", np.min(test_features))
+            #print("find_cars-max(test_features):",np.max(test_features),", min(test_features):", np.min(test_features), ", test_features.shape:", test_features.shape)
+            #print("find_cars-len(spatial_features):",len(spatial_features),", len(hist_features):", len(hist_features), ", len(hog_features):", len(hog_features))
             test_features = scaler.transform(test_features)    
             #print ("xb:", xb, ", yb:", yb, ", len(test_features):", len(hog_features))
             #test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
@@ -220,6 +245,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             if test_prediction == 1:
                 decision_function = svc.decision_function(test_features)
                 if decision_function >= decisionFunctionThreshold:
+                    decisionFunctionList+=[decision_function]
                     #print("find_cars-xb:", xb, "steps , xpos:", xpos, "cells, yb:", yb, "steps , ypos:", ypos, "cells, xleft:", xleft
                     #    , "pixels, ytop:", ytop, "pixels, window:", window,"pixels")
                     xbox_left = np.int(xleft*scale)
@@ -227,11 +253,15 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                     win_draw = np.int(window*scale)
                     #print("find_cars-draw at:", (xbox_left, ytop_draw+ystart), ",", (xbox_left+win_draw,ytop_draw+win_draw+ystart))
                     bounding_box=[(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)]
-                    #print("find_cars-test_prediction:", test_prediction, ", decision_function:", decision_function, ", bounding_box:", bounding_box)
+                    print("find_cars-test_prediction:", test_prediction, ", decision_function:", decision_function, ", bounding_box:", bounding_box)
                     boundingBoxList+=[bounding_box]
                     cv2.rectangle(draw_img,bounding_box[0], bounding_box[1],(0,0,255),6)
-    if TESTING : print("find_cars-boundingBoxList:",boundingBoxList)
-    return boundingBoxList
+                    #if TESTING : print("find_cars-len(boundingBoxList):",len(boundingBoxList), ", len(decisionFunctionList):", len(decisionFunctionList))
+
+    if TESTING : print("find_cars-boundingBoxList:",boundingBoxList, ", decisionFunctionList:", decisionFunctionList)
+    print("find_cars-len(boundingBoxList):", len(boundingBoxList), ", len(decisionFunctionList):", len(decisionFunctionList))
+    assert len(boundingBoxList)==len(decisionFunctionList)
+    return boundingBoxList, decisionFunctionList
 
 # Here is your draw_boxes function from the previous exercise
 def drawBoxes(img, bboxes, color=(0, 0, 255), thick=6):
@@ -270,14 +300,73 @@ def addHeat(imageShape, bbox_list):
     heatmap=np.zeros_like(window_img)
     heatmap=add_heat(heatmap,hotWindowList)
 
+def addWeightedHeat(imageShape, bbox_list, bbox_weights):
+    print("addWeightedHeat-len(bbox_list):", len(bbox_list), ", len(bbox_weights):", len(bbox_weights))
+    assert len(bbox_list)==len(bbox_weights)
+    print("addWeightedHeat-imageShape:", imageShape)
+    heatmap=np.zeros((imageShape[0], imageShape[1]), dtype=int)
+    if TESTING: print("addWeightedHeat-create-heatmap-counts:", np.unique(heatmap, return_counts=True))
+    # Iterate through list of bboxes
+    for box,weight in zip(bbox_list,bbox_weights) :
+        # Add += 1 for all pixels inside each bbox
+        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+        weightedHeat=int(round(weight[0]*10))
+        if TESTING: print("addWeightedHeat-increment-box:", box, ", weight:", weight, ", weightedHeat:", weightedHeat)
+        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += weightedHeat # all channels
+        # heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0], 0] += 1 # red channel only for 3 channel map
+
+    if TESTING: print("addWeightedHeat-heatmap-final-counts:", np.unique(heatmap, return_counts=True))
+    return heatmap
+
+HEATMAPSTACKSIZE=8
+heatMapStack=None
+heatMapStackOpenSlot=0 # next open slot
+
+def clearHeatmapStack():
+    global heatMapStack
+    heatMapStack=None
+
+def totalHeatmapStack(newHeatMap):
+    global heatMapStack
+    global heatMapStackOpenSlot
+    global HEATMAPSTACKSIZE
+
+    if heatMapStack is None:
+        #heatMapStack=np.ndarray(shape=(HEATMAPSTACKSIZE,newHeatMap.shape[0], newHeatMap.shape[1]))
+        heatMapStack=np.empty(shape=(HEATMAPSTACKSIZE,newHeatMap.shape[0], newHeatMap.shape[1]))
+        print ("totalHeatmapStack-newHeatMap.shape:", newHeatMap.shape, ", heatMapStack.shape:", heatMapStack.shape)
+
+    # inset new heatmap into stack
+    heatMapStack[heatMapStackOpenSlot]=newHeatMap
+    heatMapStackOpenSlot=(heatMapStackOpenSlot+1)%HEATMAPSTACKSIZE
+
+    totalMap=None
+    mapCount=0
+    for map in heatMapStack:
+        if totalMap is None:
+            totalMap=map
+            mapCount+=1
+        else:
+            if map is not None:
+                totalMap+=map
+                mapCount+=1
+
+    if TESTING: print("totalHeatmapStack-mapCount:", mapCount, ", totalMap counts:", (np.unique(totalMap, return_counts=True)), ", len(totalMap):", len(totalMap), ", len(totalMap[0]):", len(totalMap[0]))
+    print("totalHeatmapStack-mapCount:", mapCount)
+    return totalMap, mapCount # mapCount is incorrect until stack fills
+
 def applyThreshold(heatmap, threshold):
     # Zero out pixels below the threshold
     print("applyThreshold-threshold:", threshold)
     thresholdMap=heatmap.copy()
     thresholdMap[thresholdMap <= threshold] = 0
     # Return thresholded map
-    print("applyThreshold-threshold:", threshold, ", heatmap-counts:", np.unique(thresholdMap, return_counts=True))
+    if TESTING: print("applyThreshold-threshold:", threshold, ", heatmap-counts:", np.unique(thresholdMap, return_counts=True))
     return thresholdMap
+
+def normalizeMap(map):
+    normalizedMap = np.uint8(255*map/np.max(map))
+    return normalizedMap
 
 def findBoundingBoxesFromLabels(labels):
     # Iterate through all detected cars
@@ -305,23 +394,41 @@ def findLabels(heatMap):
     return labels
 
 def drawLabelsOnImage(imageToLabel, heatMap, color=(0,255,0), thick=6):
-    labels=findLabels(heatMap)
+    labels=findLabels(heatMap) # labels[0] is the bit map, labelss[1] is the number of maps
     boundingBoxes=findBoundingBoxesFromLabels(labels)
     return drawBoxes(imageToLabel, boundingBoxes, color, thick), boundingBoxes  # drawBoxes makes an image copy
     #return imageToLabel # even though it was written on already
 
+USEBOUNDINGBOXWEIGHTS=True
+USESTACKOFHEATMAPS=True
 def makeThresholdMap(image, findCars, scales=[1.5], percentOfHeapmapToToss=.5):
     print("scales:", scales, ", type:", type(scales), "image.shape:", image.shape, ", dtype:", image.dtype, ", percentOfHeapmapToToss:", percentOfHeapmapToToss)
     boundingBoxList=[]
+    boundingBoxWeights=[]
     for scale in scales:
-        boundingBoxList += findCars(image, scale)
-    unNormalizedHeatMap=addHeat(image.shape, boundingBoxList)
+        listOfBoundingBoxes, listOfWeights = findCars(image, scale)
+        boundingBoxList+=listOfBoundingBoxes
+        boundingBoxWeights+=listOfWeights
+
+    if USEBOUNDINGBOXWEIGHTS:
+        unNormalizedHeatMap=addWeightedHeat(image.shape, boundingBoxList, boundingBoxWeights)
+    else:
+        unNormalizedHeatMap=addHeat(image.shape, boundingBoxList)
+
+    if USESTACKOFHEATMAPS:
+        unNormalizedHeatMap,_=totalHeatmapStack(unNormalizedHeatMap)
+
+
     unNormalizedHeatMapCounts=np.unique(unNormalizedHeatMap, return_counts=True)
-    print("makeThresholdMap-unNormalizedHeatMapCounts:", unNormalizedHeatMapCounts, ", len(unNormalizedHeatMapCounts):", len(unNormalizedHeatMapCounts), ", len(unNormalizedHeatMapCounts[0]):", len(unNormalizedHeatMapCounts[0]))
+    if TESTING: print("makeThresholdMap-unNormalizedHeatMapCounts:", unNormalizedHeatMapCounts, ", len(unNormalizedHeatMapCounts):", len(unNormalizedHeatMapCounts), ", len(unNormalizedHeatMapCounts[0]):", len(unNormalizedHeatMapCounts[0]))
     unNormalizedHeatMapMidpoint=unNormalizedHeatMapCounts[0][int(round(len(unNormalizedHeatMapCounts[0])*percentOfHeapmapToToss))]
     thresholdMap=applyThreshold(unNormalizedHeatMap, unNormalizedHeatMapMidpoint)
-    print("makeThresholdMap-thresholdMap counts:", (np.unique(thresholdMap, return_counts=True)), ", len(thresholdMap):", len(thresholdMap), ", len(thresholdMap[0]):", len(thresholdMap[0]))
-    return thresholdMap, boundingBoxList, unNormalizedHeatMap
+    print("makeThresholdMap-max(thresholdMap):", np.max(thresholdMap), ", min(thresholdMap):", np.min(thresholdMap))
+    if TESTING: print("makeThresholdMap-thresholdMap counts:", (np.unique(thresholdMap, return_counts=True)), ", len(thresholdMap):", len(thresholdMap), ", len(thresholdMap[0]):", len(thresholdMap[0]))
+    normalizedMap=normalizeMap(thresholdMap)
+    if TESTING: print("makeThresholdMap-normalizedMap counts:", (np.unique(normalizedMap, return_counts=True)), ", len(normalizedMap):", len(normalizedMap), ", len(normalizedMap[0]):", len(normalizedMap[0]))
+    print("makeThresholdMap-max(normalizedMap):", np.max(normalizedMap), ", min(normalizedMap):", np.min(normalizedMap))
+    return normalizedMap, boundingBoxList, unNormalizedHeatMap, boundingBoxWeights
 
 def testBoundingBox():
     bb1=((0,0), (1,1))

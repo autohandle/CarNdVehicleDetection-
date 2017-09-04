@@ -7,6 +7,25 @@ import HogFeatures
 
 TESTING=False
 
+# Define a function to compute binned color features
+def bin_spatial(img, size=(32, 32)):
+    # Use cv2.resize().ravel() to create the feature vector
+    features = cv2.resize(img, size).ravel()
+    # Return the feature vector
+    return features
+
+# Define a function to compute color histogram features
+def color_hist(img, nbins=32, bins_range=(0, 256)):
+    # Compute the histogram of the color channels separately
+    channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
+    channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
+    channel3_hist = np.histogram(img[:,:,2], bins=nbins, range=bins_range)
+    # Concatenate the histograms into a single feature vector
+    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+    # Return the individual histograms, bin_centers and feature vector
+    #print("len(hist_features):", len(hist_features))
+    return hist_features
+
 def printSingleImageFeatures(feature_image, color_space):
     print("singleImageFeatures-color_space:", color_space)
     for channel in range(0,feature_image.shape[2]): \
@@ -39,11 +58,13 @@ def singleImageFeatures(img, color_space='RGB', spatial_size=(32, 32),
         spatial_features = bin_spatial(feature_image, size=spatial_size)
         #4) Append features to list
         img_features.append(spatial_features)
+        #print("singleImageFeatures-len(spatial_features):", len(spatial_features), ", spatial_size:", spatial_size)
     #5) Compute histogram features if flag is set
     if hist_feat == True:
         hist_features = color_hist(feature_image, nbins=hist_bins)
         #6) Append features to list
         img_features.append(hist_features)
+        #print("singleImageFeatures-len(hist_features):", len(hist_features), ", hist_bins:", hist_bins)
     #7) Compute HOG features if flag is set
     if hog_feat == True:
         if hog_channel == 'ALL':
@@ -55,6 +76,7 @@ def singleImageFeatures(img, color_space='RGB', spatial_size=(32, 32),
         else:
             hog_features = HogFeatures.get_hog_features(feature_image[:,:,hog_channel], orient,
                         pix_per_cell, cell_per_block, vis=False, feature_vec=True)
+        #print("singleImageFeatures-len(hog_features):", len(hog_features))
         #8) Append features to list
         img_features.append(hog_features)
 
@@ -86,5 +108,6 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                         pix_per_cell, cell_per_block, hog_channel,
                         spatial_feat, hist_feat, hog_feat)
         features.append(imageFeatures)
-    print ("extract_features-len(features):", len(features),", len(features[0]):", len(features[0]))
+    print ("extract_features-len(features):", len(features),", len(features[0]):", len(features[0]),
+        ", spatial_feat:", spatial_feat, ", hist_feat:", hist_feat, ", hog_feat:", hog_feat)
     return features

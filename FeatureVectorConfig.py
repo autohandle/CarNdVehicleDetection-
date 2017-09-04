@@ -15,6 +15,6 @@ HOGCHANNEL = 'ALL' # Can be 0, 1, 2, or "ALL"
 
 SPATIALSIZE = (16, 16) # Spatial binning dimensions
 HISTOGRAMBINS = 16    # Number of histogram bins
-SPATIALFEATURES = False # Spatial features on or off
-HISTOGRAMFEATURES = False # Histogram features on or off
+SPATIALFEATURES = True # Spatial features on or off
+HISTOGRAMFEATURES = True # Histogram features on or off
 HOGFEATURES = True # HOG features on or off
