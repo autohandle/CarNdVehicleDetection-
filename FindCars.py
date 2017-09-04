@@ -3,6 +3,7 @@ import cv2
 import HogFeatures
 import FeatureVectorConfig
 from scipy.ndimage.measurements import label
+from collections import deque
 
 TESTING=False
 
@@ -318,41 +319,35 @@ def addWeightedHeat(imageShape, bbox_list, bbox_weights):
     if TESTING: print("addWeightedHeat-heatmap-final-counts:", np.unique(heatmap, return_counts=True))
     return heatmap
 
-HEATMAPSTACKSIZE=8
-heatMapStack=None
-heatMapStackOpenSlot=0 # next open slot
+HEATMAPQUEUESIZE=8
+heatMapQueue=deque()
 
 def clearHeatmapStack():
-    global heatMapStack
-    heatMapStack=None
+    global heatMapQueue
+    heatMapQueue=deque()
 
-def totalHeatmapStack(newHeatMap):
-    global heatMapStack
-    global heatMapStackOpenSlot
-    global HEATMAPSTACKSIZE
-
-    if heatMapStack is None:
-        #heatMapStack=np.ndarray(shape=(HEATMAPSTACKSIZE,newHeatMap.shape[0], newHeatMap.shape[1]))
-        heatMapStack=np.empty(shape=(HEATMAPSTACKSIZE,newHeatMap.shape[0], newHeatMap.shape[1]))
-        print ("totalHeatmapStack-newHeatMap.shape:", newHeatMap.shape, ", heatMapStack.shape:", heatMapStack.shape)
+def totalHeatmapStack(newHeatMap): # should weight maps: 1./mapCount to empahsize newer maps
+    global heatMapQueue
+    global HEATMAPQUEUESIZE
 
     # inset new heatmap into stack
-    heatMapStack[heatMapStackOpenSlot]=newHeatMap
-    heatMapStackOpenSlot=(heatMapStackOpenSlot+1)%HEATMAPSTACKSIZE
+    heatMapQueue.append(newHeatMap)
+    if len(heatMapQueue) > HEATMAPQUEUESIZE:
+        heatMapQueue.popleft()
 
-    totalMap=None
+    totalMap=None # could be init zero like newHeatMap & drop the if
+    heatMapQueueLength=len(heatMapQueue)
     mapCount=0
-    for map in heatMapStack:
+    for map in heatMapQueue:
+        mapCount+=1
+        mapWeight=float(mapCount)/float(heatMapQueueLength)
         if totalMap is None:
-            totalMap=map
-            mapCount+=1
+            totalMap=(map*mapWeight) # init
         else:
-            if map is not None:
-                totalMap+=map
-                mapCount+=1
-
+            totalMap+=(map*mapWeight) # sum
+ 
     if TESTING: print("totalHeatmapStack-mapCount:", mapCount, ", totalMap counts:", (np.unique(totalMap, return_counts=True)), ", len(totalMap):", len(totalMap), ", len(totalMap[0]):", len(totalMap[0]))
-    print("totalHeatmapStack-mapCount:", mapCount)
+    print("totalHeatmapStack-mapCount:", mapCount, ", len(heatMapQueue):", len(heatMapQueue))
     return totalMap, mapCount # mapCount is incorrect until stack fills
 
 def applyThreshold(heatmap, threshold):
@@ -365,7 +360,8 @@ def applyThreshold(heatmap, threshold):
     return thresholdMap
 
 def normalizeMap(map):
-    normalizedMap = np.uint8(255*map/np.max(map))
+    maximumNormal=min(np.max(map), 255) # prevent sparse small values from being scaled up
+    normalizedMap = np.uint8(maximumNormal*map/np.max(map))
     return normalizedMap
 
 def findBoundingBoxesFromLabels(labels):
