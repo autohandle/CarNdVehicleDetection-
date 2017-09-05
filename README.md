@@ -182,8 +182,6 @@ and yellow boxes indicating the merging and filtering of the labels from the hea
 The video was created by:
 [`ProcessVideo.py`](./ProcessVideo.py).
 
-
-I&quot;m not sure the video meets the `minimal false positives` test.
                                                                                                        
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
