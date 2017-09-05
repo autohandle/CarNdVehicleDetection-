@@ -192,21 +192,73 @@ I&quot;m not sure the video meets the `minimal false positives` test.
 calls `process_image`.
 
 `process_image` calls `makeThresholdMap` in
-[`FindCars.py`](./FindCars.py) which uses (the class version of) `find_cars`
-to create a bounding box list using the svm classifer. The bounding box list is passed to
-(the class version of) `addHeat` to create a heat map. A percent (`PERCENTOFBOUNDINGBOXESTOTOSS`)
-of heat map counts is determined and passed to (the class version of) `applyThreshold` to
-delete bounding boxes from the lower end of the heatmap to then create a threshold map.
+[`FindCars.py`](./FindCars.py) which uses `find_cars`
+to create a bounding box list using the svm classifer.
+The bounding box list is filtered by the `svc.decision_function` value to (arbitrarily)
+remove low quality classifications
+(a suggestion from the grader).
+``` python
+test_prediction = svc.predict(test_features)
+if test_prediction == 1:
+    decision_function = svc.decision_function(test_features)
+    if decision_function >= decisionFunctionThreshold:
+```
+The bounding box list as well as
+the list of the `svc.decision_function` values is returned to `makeThresholdMap`
+when processing each frame and then
+passed to `addWeightedHeat` to create a heat map.
+Instead of just incrementing the weight for each bounding box:
+``` python
+heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1 # all channels
+```
+`addWeightedHeat` increments the heat map based on the quality (`svc.decision_function`) of the
+bounding box
+``` python
+weightedHeat=int(round(weight[0]*10))
+heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += weightedHeat # all channels
+```
+The resulting heat maps for each frame are both maintained in a rolling fixed size stack
+(a suggestion from the teaching mentor)
+and totaled up by `totalHeatmapStack`. In addition, the heatmaps (and the heat counts) are "aged" using
+the location of heatmap in the stack/queue (with the last, most recent, map receiving its full value):
+``` python
+for map in heatMapQueue:
+    mapCount+=1
+    mapWeight=float(mapCount)/float(heatMapQueueLength)
+    totalMap+=(map*mapWeight) # sum
+```
+A fixed percent (`PERCENTOFBOUNDINGBOXESTOTOSS`)
+of heat map counts is determined
+``` python
+unNormalizedHeatMapCounts=np.unique(unNormalizedHeatMap, return_counts=True)
+unNormalizedHeatMapMidpoint=unNormalizedHeatMapCounts[0]
+    [int(round(len(unNormalizedHeatMapCounts[0])*percentOfHeapmapToToss))]
+```
+and passed to `applyThreshold` to arbitrarily
+delete (zero out) map entry counts from the lower end of the theshold heat map
+``` python
+thresholdMap[thresholdMap <= threshold] = 0
+```
+to create the final threshold map.
+
+The heatmap is then normalized
+``` python
+maximumNormal=min(np.max(map), 255) # prevent sparse small values from being scaled up
+normalizedMap = np.uint8(maximumNormal*map/np.max(map))
+```
+anticipating that `findLabels` will clip values above 255 later and i preferred that they be scaled
+instead of clipped.
 
 `process_image` then uses `drawLabelsOnImage` in
-[`FindCars.py`](./FindCars.py) to convert the threshold map into labels (a list of bounding boxes).
-`process_image` uses `processLabelBoundingBoxes` to filter the label bounding boxes to try and remove false positives.
+[`FindCars.py`](./FindCars.py) to first convert the threshold map into labels (a list of bounding boxes).
+`process_image` then uses `processLabelBoundingBoxes` to filter the label bounding boxes to try and remove false positives using a frame history of previously discovered bounding boxes.
 `processLabelBoundingBoxes` maintains a rolling list of all label bounding boxes (`labelBoundingBoxCollection`)
 found in each historic frame. The number of frames maintained is set by the `BOUNDINDBOXCOLLECTIONSIZE`.
 The list of label bounding boxes is compared to prior frames to create a list of bounding boxes that
 are overlapping ([`isBoundingBoxOverlapping`](./FindCars.py)).
 The length of the overlapping list is used to decide (`OVERLAPTHRESHOLD`) which label bounding boxes
-are a positve hit for a vehicle.
+are a positve hit for a vehicle. The list of bounding boxes is combined in `mergeBoundingBoxesAcrossFrames` in 
+[`ProcessVideo.py`](./ProcessVideo.py).
 
 <!---
 
