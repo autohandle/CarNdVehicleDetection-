@@ -83,7 +83,45 @@ For these 3552 labels:  [ 1.  0.  1. ...,  0.  0.  0.]
 Test Accuracy of restored classifier =  0.9913
 90.2915 Seconds to predict 3552 labels with SVC
 
+Linear=False --> RBF
 
+Feature vector length: 6108
+svmGridSearch-theParameters: {'gamma': array([  1.00000000e-05,   1.00000000e-04,   1.00000000e-03]), 'C': array([  1000.,  10000.]), 'kernel': ['rbf']}
+svmGridSearch-Best parameters set found on development set: {'gamma': 0.0001, 'C': 1000.0, 'kernel': 'rbf'} , best score: 0.995565878378
+
+svmGridSearch-Grid scores on development set:
+
+0.992 (+/-0.003) for {'gamma': 1.0000000000000001e-05, 'C': 1000.0, 'kernel': 'rbf'}
+0.996 (+/-0.002) for {'gamma': 0.0001, 'C': 1000.0, 'kernel': 'rbf'}
+0.885 (+/-0.010) for {'gamma': 0.001, 'C': 1000.0, 'kernel': 'rbf'}
+0.992 (+/-0.003) for {'gamma': 1.0000000000000001e-05, 'C': 10000.0, 'kernel': 'rbf'}
+0.996 (+/-0.002) for {'gamma': 0.0001, 'C': 10000.0, 'kernel': 'rbf'}
+0.885 (+/-0.010) for {'gamma': 0.001, 'C': 10000.0, 'kernel': 'rbf'}
+gridSearchSvc.best_estimator_: SVC(C=1000.0, cache_size=200, class_weight=None, coef0=0.0,
+  decision_function_shape=None, degree=3, gamma=0.0001, kernel='rbf',
+  max_iter=-1, probability=False, random_state=None, shrinking=True,
+  tol=0.001, verbose=False) , gridSearchSvc: GridSearchCV(cv=5, error_score='raise',
+       estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+  decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+  max_iter=-1, probability=False, random_state=None, shrinking=True,
+  tol=0.001, verbose=False),
+       fit_params={}, iid=True, n_jobs=1,
+       param_grid={'gamma': array([  1.00000e-05,   1.00000e-04,   1.00000e-03]), 'C': array([  1000.,  10000.]), 'kernel': ['rbf']},
+       pre_dispatch='2*n_jobs', refit=True, return_train_score=True,
+       scoring=None, verbose=0)  in: 42135.5  seconds
+0.0 Seconds to train SVC...on: 14208  samples
+Training Accuracy of SVC =  1.0
+Test Accuracy of SVC =  0.9955
+My SVC predicts:  [ 0.  0.  1. ...,  1.  1.  0.]
+For these 3552 labels:  [ 0.  0.  1. ...,  1.  1.  0.]
+40.25708 Seconds to predict 3552 labels with SVC
+saving model to:  ./models/HogClassify.svm
+saveClassifier-saving model to: <./models/HogClassify.svm>
+restoring model from:  ./models/HogClassify.svm
+restoreClassifier-restoring model from: <./models/HogClassify.svm>
+My restored SVM classifier predicts:  [ 0.  0.  1. ...,  1.  1.  0.]
+For these 3552 labels:  [ 0.  0.  1. ...,  1.  1.  0.]
+Test Accuracy of restored classifier =  0.9955
 
 '''
 MODELFILENAME='./models/HogClassify.svm'
