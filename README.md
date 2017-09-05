@@ -302,7 +302,7 @@ What could you do to make it more robust?
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.
 
 Initially, I only used the HOG features and I only trained on 5000 samples.
-I only used HOG because I considered the spatial and color features a be form of  well, overfitting.
+I only used HOG because I considered the spatial and color features a be form of - well, overfitting.
 I only used a subset of the training samples to speed up the learning cycle.
 
 The resulting classifier tended to find cars from the railing along the left hand side of the road,
@@ -316,8 +316,8 @@ and in combination with the grader's suggestion to use the `svc.decision_functio
 I created a weighted rolling heatmap with aging.
 This, finally, started to improve the performance, but still, it seemd substandard (and ad-hoc).
 
-While I was thinking about creating negative samples of the railing for training  
-I rebuilt the classifier using all of the samples available  
+While I was thinking about creating negative samples of the railing for training - 
+I rebuilt the classifier using all of the samples available - 
 which took a while (my laptop is still cooling off).
 This had a big effect and I got the performance I have now with just a few false positives.
 It would be interesting to now go back and start removing the other coding features
