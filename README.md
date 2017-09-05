@@ -301,16 +301,24 @@ What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.
 
-The label bounding box filtering only reject a portion of the bounding boxes
-and does not consider the case that none of the bounding boxes is valid ([threshold map test2](./output_images/threshold/test2.jpg)).
-If no cars are present, the filter will go ahead a keep low quality candidates.
-The filter should threshold based on the absolute number of hits and reject low quality candidates.
+Initially, I only used the HOG features and I only trained on 5000 samples.
+I only used HOG because I considered the spatial and color features a be form of  well, overfitting.
+I only used a subset of the training samples to speed up the learning cycle.
 
-The classifer fails to ignore certain sections of the pavement ([threshold map test3](./output_images/threshold/test3.jpg)) and certain textures in the bridge ([threshold map test4](./output_images/threshold/test4.jpg)).
-Either the feature selection is poor or there was not enough (non-vehicle) training samples
-that represent the bridge and the pavement.
+The resulting classifier tended to find cars from the railing along the left hand side of the road,
+as well as, if you will, ghost cars in the pavement.
+The grader suggested using the `svc.decision_function` as a filter, which I did,
+but the `svc.decision_function` only slightly improved performance: it removed some of the ghost cars.
+In desperation, I added the spatial and color features, but again,
+this only slightly improved performance here and there.
+The teaching mentor suggested using a rolling heatmap, which I then did,
+and in combination with the grader's suggestion to use the `svc.decision_function`,
+I created a weighted rolling heatmap with aging.
+This, finally, started to improve the performance, but still, it seemd substandard (and ad-hoc).
 
-The bounding box does not properly find the minimum bound for the vehicle,
-some times it is too large and some times it is too small ([threshold map test4](./output_images/threshold/test4.jpg)).
-Enlarging the bounding box, searching for edges (sobel), and then (re)bounding
-might improve my bounding box.
+While I was thinking about creating negative samples of the railing for training  
+I rebuilt the classifier using all of the samples available  
+which took a while (my laptop is still cooling off).
+This had a big effect and I got the performance I have now with just a few false positives.
+It would be interesting to now go back and start removing the other coding features
+that I added to observe the effect.
